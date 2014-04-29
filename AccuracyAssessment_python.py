@@ -75,7 +75,17 @@ class AccuracyAssessment:
     def timesImage(self):
         if arcpy.Exists(self.outRec):
             outResult = Times(self.clImage, self.outRec)
-            outResult.save(self.outMat)
+            zeroVal = False
+            rows = arcpy.SearchCursor(outResult)
+            for row in rows:
+                if row.Value == 0:
+                    zeroVal = True
+            del rows, row
+            if zeroVal == True:
+                outResultNew = Reclassify(outResult, "Value", RemapValue([[0, "NODATA"]]))
+            else:
+                outResultNew = outResult
+            outResultNew.save(self.outMat)
             arcpy.AddMessage("Accuracy assessment image has been calculated!")
         else:
             arcpy.AddError(outRec + " doesn't exist!")
@@ -164,7 +174,6 @@ class AccuracyAssessment:
 
 #----------------------------------------------------------------------------------------------------------
 # Run the code
-
 AA = AccuracyAssessment(classifiedImage, validationImage, reclCode, outputRec, outputMat, outputCSV)
 arcpy.AddMessage("Start reclassifying testing image...")
 AA.reclValidation()
